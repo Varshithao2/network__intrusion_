@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Data (CIC-IDS2017 CSVs can be several GB - never commit them)
+data/*.csv
+!data/README.md
+
+# Models and outputs (regenerate via training, don't commit large binaries)
+models/*.pkl
+!models/.gitkeep
+outputs/*.csv
+outputs/*.json
+outputs/*.png
+!outputs/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
