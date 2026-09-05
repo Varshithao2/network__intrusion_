@@ -20,6 +20,8 @@ Run with:  streamlit run app.py
 
 import os
 import json
+import subprocess
+import sys
 import time
 from datetime import datetime
 
@@ -38,8 +40,7 @@ OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 st.set_page_config(
-    page_title="ML-IDS | Network Intrusion Detection",
-    page_icon="🛡️",
+    page_title="Network Intrusion Detection",
     layout="wide",
 )
 
@@ -204,17 +205,31 @@ def load_training_summary():
     return None
 
 
+def ensure_models():
+    """Train the default demo model when model artifacts are missing."""
+    if models_available():
+        return
+
+    with st.spinner("No trained model found. Training the demo model..."):
+        completed = subprocess.run(
+            [sys.executable, "-m", "src.train_model"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+        )
+
+    if completed.returncode != 0 or not models_available():
+        details = completed.stderr.strip() or completed.stdout.strip()
+        raise RuntimeError(details or "Model training did not create the expected artifacts.")
+
+
 # =======================================================================
 # Bootstrap
 # =======================================================================
-if not models_available():
-    st.error("NO TRAINED MODEL FOUND")
-    st.code("python -m src.train_model", language="bash")
-    st.warning(
-        "Run the command above (trains on the auto-generated demo dataset if "
-        "you haven't downloaded CIC-IDS2017 yet -- see `data/README.md`), "
-        "then refresh this page."
-    )
+try:
+    ensure_models()
+except Exception as exc:
+    st.error(f"Could not prepare the detection model: {exc}")
     st.stop()
 
 artifacts = get_artifacts()
@@ -233,7 +248,7 @@ dataset_label = "CIC-IDS2017-format CSV" if results is not None else "No dataset
 st.markdown(f"""
 <div class="ids-header">
     <div>
-        <div class="ids-header-title">🛡️ ML-IDS / NETWORK INTRUSION DETECTION</div>
+        <div class="ids-header-title">🛡️ NETWORK INTRUSION DETECTION</div>
         <div class="ids-header-sub">FORTINET SECURITY ASSOCIATE · AICTE&ndash;EDUSKILLS</div>
         <div class="version-tag">PROTOTYPE v1.0</div>
     </div>
